@@ -30,6 +30,7 @@ Codemagic (grátis): conecte o repositório e rode o workflow "Jogo da Velha APK
 A pasta `app/src/main/assets` é um site pronto (instalável como PWA). Hospede grátis, por exemplo no **Cloudflare Pages**:
 *Workers & Pages → Create → Pages → Connect to Git →* escolha o repositório e a branch,
 **Build command:** vazio · **Build output directory:** `app/src/main/assets`.
+Se o Cloudflare criar um projeto do tipo *Workers* (deploy command `npx wrangler deploy`), o arquivo `wrangler.jsonc` já aponta a pasta do site.
 Cada commit na branch republica o site. Depois é só mandar o link; no Chrome dá pra "Adicionar à tela inicial".
 
 ## Como funciona o ranking
