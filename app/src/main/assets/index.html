@@ -10,15 +10,15 @@
 <style>
   :root {
     --bg: #0f172a; --panel: #1e293b; --line: #334155; --text: #f1f5f9; --muted: #94a3b8;
-    --x: #38bdf8; --o: #fb7185; --ok: #4ade80; --accent: #6366f1;
+    --x: #38bdf8; --o: #fb7185; --ok: #4ade80; --accent: #6366f1; --gold: #fbbf24;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  #app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 16px; max-width: 480px; margin: 0 auto; overflow-y: auto; }
+  #app { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; max-width: 480px; margin: 0 auto; }
   h1 { font-size: 28px; margin: 0 0 6px; text-align: center; }
-  .sub { color: var(--muted); margin: 0 0 28px; text-align: center; }
+  .sub { color: var(--muted); margin: 0 0 22px; text-align: center; }
   .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
   .screen.on { display: flex; }
   button { font: inherit; font-weight: 600; border: 0; border-radius: 14px; padding: 14px 20px; width: 100%;
@@ -29,28 +29,47 @@
   input { font: inherit; font-size: 28px; letter-spacing: 8px; text-align: center; text-transform: uppercase;
     width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel);
     color: var(--text); margin-bottom: 12px; user-select: text; }
+  input.name { font-size: 18px; letter-spacing: 0; text-transform: none; padding: 12px; }
+  label.lbl { align-self: flex-start; color: var(--muted); font-size: 13px; margin: 0 0 6px 4px; }
   .code { font-size: 48px; font-weight: 800; letter-spacing: 10px; background: var(--panel);
     border: 2px dashed var(--line); border-radius: 18px; padding: 16px 20px 16px 30px; margin: 8px 0 16px;
     user-select: text; }
   .msg { color: var(--muted); text-align: center; min-height: 24px; margin: 4px 0 16px; }
   .err { color: var(--o); }
+  .note { color: var(--muted); font-size: 12px; text-align: center; margin: -4px 0 12px; }
   .hud { display: flex; width: 100%; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
-  .pl { flex: 1; background: var(--panel); border: 2px solid transparent; border-radius: 14px; padding: 10px;
+  .pl { flex: 1; min-width: 0; background: var(--panel); border: 2px solid transparent; border-radius: 14px; padding: 10px;
     text-align: center; }
   .pl.turn { border-color: currentColor; }
   .pl b { font-size: 26px; display: block; }
-  .pl small { color: var(--muted); }
+  .pl small { color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pl.x { color: var(--x); } .pl.o { color: var(--o); }
   .score { font-size: 22px; font-weight: 700; color: var(--text); }
+  #badge { color: var(--gold); font-size: 13px; font-weight: 700; min-height: 18px; margin-bottom: 2px; }
   #status { font-size: 20px; font-weight: 700; margin: 6px 0 16px; min-height: 28px; text-align: center; }
-  #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 340px, 100vw - 32px, 100vh - 380px);
-    aspect-ratio: 1; margin-bottom: 16px; flex-shrink: 0; grid-template-rows: repeat(3, 1fr); }
+  #board { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px;
+    width: min(100%, 340px, 100vw - 32px, 100vh - 400px); aspect-ratio: 1; margin-bottom: 16px; flex-shrink: 0; }
   .cell { background: var(--panel); border-radius: 16px; display: flex; align-items: center; justify-content: center;
     font-size: min(18vw, 84px); font-weight: 800; padding: 0; margin: 0; width: auto; color: var(--text); }
   .cell.x { color: var(--x); } .cell.o { color: var(--o); }
   .cell.win { background: #14532d; outline: 3px solid var(--ok); }
   .cell:disabled { opacity: 1; }
-  .row { display: flex; gap: 10px; width: 100%; }
+  .spin { width: 44px; height: 44px; border: 5px solid var(--line); border-top-color: var(--accent);
+    border-radius: 50%; animation: sp 1s linear infinite; margin: 10px 0 18px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  #rank-list { width: 100%; margin-bottom: 14px; }
+  .rk { display: flex; align-items: center; gap: 10px; background: var(--panel); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 6px; }
+  .rk.me { outline: 2px solid var(--accent); }
+  .rk .pos { width: 28px; text-align: center; font-weight: 800; color: var(--muted); }
+  .rk:nth-child(1) .pos { color: var(--gold); }
+  .rk .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .rk .wl { color: var(--muted); font-size: 12px; }
+  .rk .w { font-weight: 800; min-width: 34px; text-align: right; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel);
+    border: 1px solid var(--line); padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0;
+    pointer-events: none; transition: opacity .25s; max-width: 90%; text-align: center; }
+  #toast.on { opacity: 1; }
 </style>
 </head>
 <body>
@@ -58,9 +77,29 @@
 
   <section id="s-menu" class="screen on">
     <h1>❌ Jogo da Velha ⭕</h1>
-    <p class="sub">Online — cada um no seu celular</p>
-    <button id="b-create">Criar sala</button>
+    <p class="sub">Online — cada um no seu celular ou navegador</p>
+    <label class="lbl" for="name">Seu apelido</label>
+    <input id="name" class="name" maxlength="12" autocomplete="off" placeholder="Seu apelido">
+    <button id="b-mm">🏆 Jogar online (ranqueada)</button>
+    <button id="b-create" class="ghost">Criar sala com código</button>
     <button id="b-join-go" class="ghost">Entrar numa sala</button>
+    <button id="b-rank" class="ghost">📊 Ranking</button>
+    <p class="note" id="menu-note"></p>
+  </section>
+
+  <section id="s-mm" class="screen">
+    <h1>Procurando adversário</h1>
+    <p class="sub">Partida ranqueada: vale ponto no ranking</p>
+    <div class="spin"></div>
+    <p class="msg" id="mm-msg">Conectando…</p>
+    <button class="ghost b-back">Cancelar</button>
+  </section>
+
+  <section id="s-rank" class="screen">
+    <h1>🏆 Ranking</h1>
+    <p class="sub">Mais vitórias em partidas ranqueadas</p>
+    <div id="rank-list"></div>
+    <button class="ghost b-back">Voltar</button>
   </section>
 
   <section id="s-host" class="screen">
@@ -82,6 +121,7 @@
   </section>
 
   <section id="s-game" class="screen">
+    <div id="badge"></div>
     <div class="hud">
       <div class="pl x" id="pl-X"><b>X</b><small id="n-X">Você</small><div class="score" id="sc-X">0</div></div>
       <div class="pl o" id="pl-O"><b>O</b><small id="n-O">Amigo</small><div class="score" id="sc-O">0</div></div>
@@ -93,12 +133,18 @@
   </section>
 
 </div>
+<div id="toast"></div>
 
+<script src="firebase-config.js"></script>
+<script src="firebase-app-compat.js"></script>
+<script src="firebase-auth-compat.js"></script>
+<script src="firebase-database-compat.js"></script>
 <script src="peerjs.min.js"></script>
 <script>
 (function () {
   "use strict";
 
+  // ---------- Configuração ----------
   // Servidor de sinalização: por padrão o PeerJS Cloud (grátis). Dá pra trocar via ?peerHost=...&peerPort=...
   var q = new URLSearchParams(location.search);
   var PEER_OPTS = {
@@ -120,6 +166,8 @@
   var PREFIX = "velha-online-";
   var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem letras/números parecidos
   var LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  var STALE_MS = 60000;       // entrada da fila mais velha que isso é ignorada
+  var KEEPALIVE_MS = 20000;
 
   var $ = function (id) { return document.getElementById(id); };
   var peer = null, conn = null;
@@ -127,6 +175,68 @@
   var st = null;              // estado do jogo (autoritativo no host)
   var roomCode = "";
   var joinTimer = null;
+  var ranked = false, oppName = "", recordedRound = null;
+  var mmToken = 0, mmFail = null, keepTimer = null, amWaiting = false;
+
+  // ---------- Nome ----------
+  function cleanName(s) {
+    return String(s || "").replace(/[^\p{L}\p{N} _.\-]/gu, "").trim().slice(0, 12);
+  }
+  function myName() {
+    var n = "";
+    try { n = cleanName(localStorage.getItem("velha_name")); } catch (e) {}
+    if (!n) {
+      n = "Jogador" + Math.floor(1000 + Math.random() * 9000);
+      try { localStorage.setItem("velha_name", n); } catch (e) {}
+    }
+    return n;
+  }
+  $("name").value = myName();
+  $("name").oninput = function () {
+    var n = cleanName(this.value);
+    try { localStorage.setItem("velha_name", n); } catch (e) {}
+  };
+  $("name").onblur = function () { this.value = myName(); };
+
+  // ---------- Firebase (ranking + matchmaking) ----------
+  var FB = { p: null, uid: null, db: null, offset: 0 };
+  function fbEnabled() { return !!(window.FIREBASE_CONFIG && window.firebase); }
+  function fbInit() {
+    if (FB.p) return FB.p;
+    FB.p = (async function () {
+      if (!fbEnabled()) throw new Error("nofb");
+      if (!(firebase.apps && firebase.apps.length)) firebase.initializeApp(window.FIREBASE_CONFIG);
+      var cred = await firebase.auth().signInAnonymously();
+      FB.uid = cred.user.uid;
+      FB.db = firebase.database();
+      try { FB.offset = (await FB.db.ref(".info/serverTimeOffset").once("value")).val() || 0; } catch (e) {}
+      return FB;
+    })();
+    FB.p.catch(function () { FB.p = null; });
+    return FB.p;
+  }
+  function now() { return Date.now() + FB.offset; }
+  function fbErr(e) {
+    var c = String((e && (e.code || e.message)) || "erro");
+    return /auth\/|permission/i.test(c)
+      ? "o servidor recusou (" + c + ") — confira as regras e o login anônimo do Firebase"
+      : "sem conexão com o servidor (" + c + ")";
+  }
+  function qref() { return FB.db.ref("queue/waiting"); }
+  function leaveQueue() {
+    if (!FB.db) return;
+    var uid = FB.uid;
+    try {
+      qref().transaction(function (cur) { return cur && cur.uid === uid ? null : undefined; }).catch(function () {});
+      qref().onDisconnect().cancel();
+    } catch (e) {}
+  }
+
+  var toastT = null;
+  function toast(text) {
+    var t = $("toast"); t.textContent = text; t.classList.add("on");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("on"); }, 2800);
+  }
 
   // ---------- UI ----------
   function show(name) {
@@ -134,6 +244,11 @@
     $("s-" + name).classList.add("on");
   }
   function setMsg(id, text, isErr) { var e = $(id); e.textContent = text; e.className = "msg" + (isErr ? " err" : ""); }
+
+  if (!fbEnabled()) {
+    $("b-mm").disabled = true; $("b-rank").disabled = true;
+    $("menu-note").textContent = "Ranking e matchmaking ficam disponíveis quando o Firebase for configurado (veja o README).";
+  }
 
   var boardEl = $("board");
   for (var i = 0; i < 9; i++) {
@@ -155,14 +270,16 @@
     }
     $("sc-X").textContent = st.scores.X;
     $("sc-O").textContent = st.scores.O;
-    $("n-X").textContent = role === "X" ? "Você" : "Amigo";
-    $("n-O").textContent = role === "O" ? "Você" : "Amigo";
+    var me = myName() + " (você)", opp = oppName || "Amigo";
+    $("n-X").textContent = role === "X" ? me : opp;
+    $("n-O").textContent = role === "O" ? me : opp;
     $("pl-X").classList.toggle("turn", !st.over && st.turn === "X");
     $("pl-O").classList.toggle("turn", !st.over && st.turn === "O");
+    $("badge").textContent = ranked ? "🏆 Partida ranqueada" : "";
 
     var s = $("status");
     if (st.over) {
-      if (st.winner) { s.textContent = st.winner === role ? "🎉 Você ganhou!" : "😅 Seu amigo ganhou"; }
+      if (st.winner) { s.textContent = st.winner === role ? "🎉 Você ganhou!" : "😅 " + (oppName || "Seu amigo") + " ganhou"; }
       else { s.textContent = "Deu velha! 🤝"; }
     } else {
       s.textContent = st.turn === role ? "Sua vez" : "Vez do seu amigo…";
@@ -173,9 +290,9 @@
   }
 
   // ---------- Lógica do jogo (roda no host) ----------
-  function freshState(scores, starter) {
+  function freshState(scores, starter, round) {
     return { board: Array(9).fill(null), turn: starter, starter: starter, over: false, winner: null, line: null,
-             scores: scores || { X: 0, O: 0 } };
+             scores: scores || { X: 0, O: 0 }, round: round || 1 };
   }
   function checkWin(b) {
     for (var i = 0; i < LINES.length; i++) {
@@ -195,14 +312,73 @@
   }
   function newRound() {
     var next = st.starter === "X" ? "O" : "X";
-    st = freshState(st.scores, next);
+    st = freshState(st.scores, next, st.round + 1);
   }
   function broadcast() {
     render();
+    maybeRecord();
     if (conn && conn.open) conn.send({ t: "state", st: st });
   }
 
-  // ---------- Ações ----------
+  // ---------- Ranking: cada jogador registra o próprio resultado (só partidas ranqueadas) ----------
+  function maybeRecord() {
+    if (!ranked || !st || !st.over || recordedRound === st.round) return;
+    recordedRound = st.round;
+    var field = st.winner ? (st.winner === role ? "wins" : "losses") : "draws";
+    recordResult(field);
+  }
+  async function recordResult(field) {
+    try {
+      await fbInit();
+      var name = myName();
+      await FB.db.ref("players/" + FB.uid).transaction(function (cur) {
+        var n = { name: name, wins: (cur && cur.wins) || 0, losses: (cur && cur.losses) || 0, draws: (cur && cur.draws) || 0 };
+        n[field]++;
+        return n;
+      });
+      toast(field === "wins" ? "🏆 +1 vitória no ranking" : field === "losses" ? "Derrota registrada no ranking" : "Empate registrado no ranking");
+    } catch (e) {
+      toast("Não consegui salvar no ranking");
+    }
+  }
+
+  async function openRanking() {
+    cleanup();
+    show("rank");
+    var box = $("rank-list");
+    box.textContent = "Carregando…";
+    try {
+      await fbInit();
+      var snap = await FB.db.ref("players").orderByChild("wins").limitToLast(20).once("value");
+      var arr = [];
+      snap.forEach(function (ch) { var v = ch.val(); v.id = ch.key; arr.push(v); });
+      arr.sort(function (a, b) { return (b.wins - a.wins) || (a.losses - b.losses) || 0; });
+      box.textContent = "";
+      if (!arr.length) { box.textContent = "Ninguém no ranking ainda. Jogue uma partida ranqueada!"; return; }
+      var inTop = false;
+      arr.forEach(function (p, idx) {
+        var me = p.id === FB.uid; if (me) inTop = true;
+        box.appendChild(rankRow(idx + 1, p, me));
+      });
+      if (!inTop) {
+        var mine = (await FB.db.ref("players/" + FB.uid).once("value")).val();
+        if (mine) box.appendChild(rankRow("•", mine, true));
+      }
+    } catch (e) {
+      box.textContent = "Não consegui carregar o ranking: " + fbErr(e);
+    }
+  }
+  function rankRow(pos, p, me) {
+    var r = document.createElement("div"); r.className = "rk" + (me ? " me" : "");
+    var a = document.createElement("div"); a.className = "pos"; a.textContent = pos;
+    var n = document.createElement("div"); n.className = "nm"; n.textContent = p.name || "?";
+    var l = document.createElement("div"); l.className = "wl"; l.textContent = p.losses + "D · " + p.draws + "E";
+    var w = document.createElement("div"); w.className = "w"; w.textContent = p.wins + "V";
+    [a, n, l, w].forEach(function (x) { r.appendChild(x); });
+    return r;
+  }
+
+  // ---------- Ações no jogo ----------
   function onCell(i) {
     if (!st || st.over || st.turn !== role) return;
     if (role === "X") { if (applyMove("X", i)) broadcast(); }
@@ -216,9 +392,12 @@
   // ---------- Rede ----------
   function cleanup() {
     clearTimeout(joinTimer);
+    clearInterval(keepTimer); keepTimer = null;
+    mmToken++; mmFail = null;
+    if (amWaiting) { amWaiting = false; leaveQueue(); }
     try { if (conn) conn.close(); } catch (e) {}
     try { if (peer) peer.destroy(); } catch (e) {}
-    conn = null; peer = null; st = null; role = null;
+    conn = null; peer = null; st = null; role = null; ranked = false; oppName = ""; recordedRound = null;
   }
   function toMenu() { cleanup(); show("menu"); }
   document.querySelectorAll(".b-back").forEach(function (b) { b.onclick = toMenu; });
@@ -233,7 +412,44 @@
     return s;
   }
 
-  // Host
+  // Quem recebe a conexão é o host (X)
+  function hostAccept(c) {
+    if (conn && conn.open) {
+      c.on("open", function () { c.send({ t: "full" }); setTimeout(function () { c.close(); }, 300); });
+      return;
+    }
+    conn = c;
+    c.on("open", function () {
+      role = "X";
+      st = freshState({ X: 0, O: 0 }, "X", 1);
+      c.send({ t: "hello", name: myName() });
+      show("game");
+      broadcast();
+    });
+    c.on("data", function (d) {
+      if (!d || !st) return;
+      if (d.t === "name") { oppName = cleanName(d.name); render(); }
+      else if (d.t === "move") { if (applyMove("O", d.i)) broadcast(); }
+      else if (d.t === "again" && st.over) { newRound(); broadcast(); }
+    });
+    c.on("close", onPeerLeft);
+    c.on("error", onPeerLeft);
+  }
+
+  // Quem se conecta é o convidado (O)
+  function guestWire(c, handlers) {
+    c.on("open", function () { conn = c; role = "O"; if (handlers.open) handlers.open(); });
+    c.on("data", function (d) {
+      if (!d) return;
+      if (d.t === "full") { if (handlers.full) handlers.full(); return; }
+      if (d.t === "hello") { oppName = cleanName(d.name); c.send({ t: "name", name: myName() }); return; }
+      if (d.t === "state") { st = d.st; show("game"); render(); maybeRecord(); }
+    });
+    c.on("close", onPeerLeft);
+    c.on("error", onPeerLeft);
+  }
+
+  // --- Sala com código: host
   $("b-create").onclick = function () { createRoom(0); };
   function createRoom(attempt) {
     cleanup();
@@ -247,32 +463,15 @@
       if (e.type === "unavailable-id" && attempt < 5) return createRoom(attempt + 1);
       setMsg("host-msg", "Erro de conexão (" + e.type + "). Verifique a internet e tente de novo.", true);
     });
-    peer.on("connection", function (c) {
-      if (conn && conn.open) { c.on("open", function () { c.send({ t: "full" }); setTimeout(function () { c.close(); }, 300); }); return; }
-      conn = c;
-      c.on("open", function () {
-        role = "X";
-        st = freshState({ X: 0, O: 0 }, "X");
-        c.send({ t: "hello" });
-        show("game");
-        broadcast();
-      });
-      c.on("data", function (d) {
-        if (!d || !st) return;
-        if (d.t === "move") { if (applyMove("O", d.i)) broadcast(); }
-        else if (d.t === "again" && st.over) { newRound(); broadcast(); }
-      });
-      c.on("close", onPeerLeft);
-      c.on("error", onPeerLeft);
-    });
+    peer.on("connection", hostAccept);
   }
   $("b-share").onclick = function () {
-    var text = "Bora jogar Jogo da Velha online! Abra o app, toque em \"Entrar numa sala\" e digite o código: " + roomCode;
+    var text = "Bora jogar Jogo da Velha online! Abra o app (ou o site), toque em \"Entrar numa sala\" e digite o código: " + roomCode;
     if (navigator.share) navigator.share({ text: text }).catch(function () {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text);
   };
 
-  // Convidado
+  // --- Sala com código: convidado
   $("b-join-go").onclick = function () { cleanup(); $("join-code").value = ""; setMsg("join-msg", ""); show("join"); };
   $("join-code").oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); };
   $("b-join").onclick = function () {
@@ -281,8 +480,10 @@
     cleanup();
     setMsg("join-msg", "Conectando…");
     $("b-join").disabled = true;
-    function fail(text) { clearTimeout(joinTimer); setMsg("join-msg", text, true); $("b-join").disabled = false; try { if (peer) peer.destroy(); } catch (e) {} peer = null; conn = null; }
-
+    function fail(text) {
+      clearTimeout(joinTimer); setMsg("join-msg", text, true); $("b-join").disabled = false;
+      try { if (peer) peer.destroy(); } catch (e) {} peer = null; conn = null;
+    }
     peer = new Peer(PEER_OPTS);
     peer.on("error", function (e) {
       fail(e.type === "peer-unavailable" ? "Sala não encontrada. Confira o código." : "Erro de conexão (" + e.type + "). Tente de novo.");
@@ -290,27 +491,108 @@
     peer.on("open", function () {
       var c = peer.connect(PREFIX + code, { reliable: true });
       joinTimer = setTimeout(function () { fail("Não consegui conectar. Tente de novo."); }, 20000);
-      c.on("open", function () { clearTimeout(joinTimer); conn = c; role = "O"; $("b-join").disabled = false; });
-      c.on("data", function (d) {
-        if (!d) return;
-        if (d.t === "full") { fail("Essa sala já está cheia."); return; }
-        if (d.t === "state") { st = d.st; show("game"); render(); }
+      guestWire(c, {
+        open: function () { clearTimeout(joinTimer); $("b-join").disabled = false; },
+        full: function () { fail("Essa sala já está cheia."); }
       });
-      c.on("close", onPeerLeft);
-      c.on("error", onPeerLeft);
     });
   };
+
+  // --- Matchmaking (ranqueada)
+  $("b-mm").onclick = function () { startMatchmaking(); };
+  async function startMatchmaking() {
+    cleanup();
+    var token = mmToken;
+    ranked = true;
+    show("mm");
+    setMsg("mm-msg", "Conectando ao servidor…");
+    try { await fbInit(); }
+    catch (e) { if (token === mmToken) setMsg("mm-msg", "Não consegui entrar no servidor: " + fbErr(e), true); return; }
+    if (token !== mmToken) return;
+
+    var p = new Peer(PEER_OPTS);
+    peer = p;
+    p.on("error", function (e) {
+      if (token !== mmToken) return;
+      if (e.type === "peer-unavailable" && mmFail) return mmFail();
+      if (!conn) setMsg("mm-msg", "Erro de conexão (" + e.type + "). Tente de novo.", true);
+    });
+    p.on("connection", function (c) {
+      if (token !== mmToken || !amWaiting) { c.close(); return; }
+      amWaiting = false;
+      clearInterval(keepTimer); keepTimer = null;
+      try { qref().onDisconnect().cancel(); } catch (e) {}
+      hostAccept(c);
+    });
+    p.on("open", function (id) { if (token === mmToken) matchmake(token, id, 0); });
+  }
+
+  async function matchmake(token, myPeerId, tries) {
+    var mode = null, opp = null;
+    var uid = FB.uid, name = myName();
+    var res;
+    try {
+      res = await qref().transaction(function (cur) {
+        var t = now();
+        if (cur && cur.uid !== uid && t - cur.ts < STALE_MS) { mode = "guest"; opp = cur; return null; }
+        mode = "waiter"; opp = null;
+        return { uid: uid, name: name, peer: myPeerId, ts: t };
+      });
+    } catch (e) {
+      if (token === mmToken) setMsg("mm-msg", "Erro no servidor: " + fbErr(e), true);
+      return;
+    }
+    if (token !== mmToken) { if (mode === "waiter") leaveQueue(); return; }
+    if (!res.committed) { if (tries < 5) return matchmake(token, myPeerId, tries + 1); setMsg("mm-msg", "Servidor ocupado. Tente de novo.", true); return; }
+
+    if (mode === "waiter") {
+      amWaiting = true;
+      setMsg("mm-msg", "Esperando um adversário entrar…");
+      try { qref().onDisconnect().remove(); } catch (e) {}
+      clearInterval(keepTimer);
+      keepTimer = setInterval(function () {
+        qref().transaction(function (cur) { return cur && cur.uid === uid ? { uid: uid, name: name, peer: myPeerId, ts: now() } : undefined; }).catch(function () {});
+      }, KEEPALIVE_MS);
+      return;
+    }
+
+    // mode === "guest": achei alguém esperando
+    setMsg("mm-msg", "Adversário encontrado! Conectando…");
+    var done = false;
+    function retry() {
+      if (done || token !== mmToken) return;
+      done = true; mmFail = null; clearTimeout(joinTimer);
+      try { if (conn) conn.close(); } catch (e) {}
+      conn = null;
+      if (tries < 4) { setMsg("mm-msg", "Não deu certo, procurando outro…"); matchmake(token, myPeerId, tries + 1); }
+      else setMsg("mm-msg", "Não consegui conectar com ninguém. Tente de novo.", true);
+    }
+    mmFail = retry;
+    var c = peer.connect(opp.peer, { reliable: true });
+    joinTimer = setTimeout(retry, 15000);
+    guestWire(c, {
+      open: function () { done = true; mmFail = null; clearTimeout(joinTimer); },
+      full: retry
+    });
+  }
+
+  $("b-rank").onclick = openRanking;
 
   function onPeerLeft() {
     if (!st) return;
     conn = null;
     st.over = true;
     render();
-    $("status").textContent = "Seu amigo saiu da sala 😕";
+    $("status").textContent = (oppName || "Seu amigo") + " saiu da sala 😕";
     $("b-again").style.display = "none";
   }
 })();
 </script>
-<script>if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) navigator.serviceWorker.register("sw.js").catch(function(){});</script>
+<script>
+  // Service worker só no navegador (no app o WebView já serve os arquivos locais).
+  if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0 && !/[?&]app=1/.test(location.search)) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+</script>
 </body>
 </html>

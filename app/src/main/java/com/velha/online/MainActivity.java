@@ -5,9 +5,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
     private WebView web;
@@ -17,6 +21,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // Serve os arquivos de assets em https://appassets.androidplatform.net/ (origem https "de verdade",
+        // necessária pro login/banco do Firebase funcionarem).
+        final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         web = new WebView(this);
         web.setBackgroundColor(0xFF0F172A);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -24,14 +34,19 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return loader.shouldInterceptRequest(request.getUrl());
+            }
+        });
         web.setWebChromeClient(new WebChromeClient());
         setContentView(web);
 
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
         } else {
-            web.loadUrl("file:///android_asset/index.html");
+            web.loadUrl("https://appassets.androidplatform.net/index.html?app=1");
         }
     }
 

@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "players": {
+      ".indexOn": ["wins"],
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['name', 'wins', 'losses', 'draws'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 12" },
+        "wins": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= (data.exists() ? data.val() + 1 : 1)" },
+        "losses": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= (data.exists() ? data.val() + 1 : 1)" },
+        "draws": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= (data.exists() ? data.val() + 1 : 1)" },
+        "$other": { ".validate": false }
+      }
+    },
+    "queue": {
+      "waiting": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['uid', 'name', 'peer', 'ts'])",
+        "uid": { ".validate": "newData.isString()" },
+        "name": { ".validate": "newData.isString() && newData.val().length <= 12" },
+        "peer": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "ts": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
