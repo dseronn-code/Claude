@@ -1,8 +1,6 @@
 name: Build APK
 
 on:
-  push:
-    branches: ["claude/multiplayer-tic-tac-toe-9ol7t1"]
   workflow_dispatch:
 
 permissions:

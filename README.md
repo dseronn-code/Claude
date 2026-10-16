@@ -11,3 +11,7 @@ Mande o `.apk` pro amigo e instale permitindo "fontes desconhecidas".
 - `app/src/main/assets/index.html` — o jogo inteiro (HTML/JS)
 - `app/src/main/assets/peerjs.min.js` — PeerJS 1.5.4
 - `app/src/main/java/.../MainActivity.java` — WebView que abre o jogo
+
+## Sem GitHub Actions
+- **Codemagic (grátis):** conecte este repositório em codemagic.io; o `codemagic.yaml` já compila o APK.
+- **PWA:** a pasta `app/src/main/assets` é um site completo (manifest + service worker). Hospede em qualquer lugar (Netlify Drop, Cloudflare Pages…) e use "Adicionar à tela inicial".

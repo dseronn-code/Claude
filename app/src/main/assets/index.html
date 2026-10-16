@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Jogo da Velha Online</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icon-192.png">
 <style>
   :root {
     --bg: #0f172a; --panel: #1e293b; --line: #334155; --text: #f1f5f9; --muted: #94a3b8;
@@ -308,5 +311,6 @@
   }
 })();
 </script>
+<script>if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) navigator.serviceWorker.register("sw.js").catch(function(){});</script>
 </body>
 </html>
