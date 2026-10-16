@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Jogo da Velha Online</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #1e293b; --line: #334155; --text: #f1f5f9; --muted: #94a3b8;
+    --x: #38bdf8; --o: #fb7185; --ok: #4ade80; --accent: #6366f1;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; max-width: 480px; margin: 0 auto; overflow-y: auto; }
+  h1 { font-size: 28px; margin: 0 0 6px; text-align: center; }
+  .sub { color: var(--muted); margin: 0 0 28px; text-align: center; }
+  .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+  .screen.on { display: flex; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 14px; padding: 14px 20px; width: 100%;
+    background: var(--accent); color: #fff; margin-bottom: 12px; }
+  button:active { transform: scale(.98); }
+  button.ghost { background: var(--panel); color: var(--text); border: 1px solid var(--line); }
+  button:disabled { opacity: .5; }
+  input { font: inherit; font-size: 28px; letter-spacing: 8px; text-align: center; text-transform: uppercase;
+    width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); margin-bottom: 12px; user-select: text; }
+  .code { font-size: 48px; font-weight: 800; letter-spacing: 10px; background: var(--panel);
+    border: 2px dashed var(--line); border-radius: 18px; padding: 16px 20px 16px 30px; margin: 8px 0 16px;
+    user-select: text; }
+  .msg { color: var(--muted); text-align: center; min-height: 24px; margin: 4px 0 16px; }
+  .err { color: var(--o); }
+  .hud { display: flex; width: 100%; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  .pl { flex: 1; background: var(--panel); border: 2px solid transparent; border-radius: 14px; padding: 10px;
+    text-align: center; }
+  .pl.turn { border-color: currentColor; }
+  .pl b { font-size: 26px; display: block; }
+  .pl small { color: var(--muted); }
+  .pl.x { color: var(--x); } .pl.o { color: var(--o); }
+  .score { font-size: 22px; font-weight: 700; color: var(--text); }
+  #status { font-size: 20px; font-weight: 700; margin: 6px 0 16px; min-height: 28px; text-align: center; }
+  #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 340px, 100vw - 32px, 100vh - 380px);
+    aspect-ratio: 1; margin-bottom: 16px; flex-shrink: 0; grid-template-rows: repeat(3, 1fr); }
+  .cell { background: var(--panel); border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: min(18vw, 84px); font-weight: 800; padding: 0; margin: 0; width: auto; color: var(--text); }
+  .cell.x { color: var(--x); } .cell.o { color: var(--o); }
+  .cell.win { background: #14532d; outline: 3px solid var(--ok); }
+  .cell:disabled { opacity: 1; }
+  .row { display: flex; gap: 10px; width: 100%; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="s-menu" class="screen on">
+    <h1>❌ Jogo da Velha ⭕</h1>
+    <p class="sub">Online — cada um no seu celular</p>
+    <button id="b-create">Criar sala</button>
+    <button id="b-join-go" class="ghost">Entrar numa sala</button>
+  </section>
+
+  <section id="s-host" class="screen">
+    <h1>Sala criada</h1>
+    <p class="sub">Passe este código pro seu amigo</p>
+    <div class="code" id="host-code">·····</div>
+    <button id="b-share" class="ghost">Compartilhar código</button>
+    <p class="msg" id="host-msg">Aguardando seu amigo entrar…</p>
+    <button class="ghost b-back">Cancelar</button>
+  </section>
+
+  <section id="s-join" class="screen">
+    <h1>Entrar na sala</h1>
+    <p class="sub">Digite o código que seu amigo te passou</p>
+    <input id="join-code" maxlength="5" autocomplete="off" autocapitalize="characters" placeholder="ABCDE">
+    <button id="b-join">Entrar</button>
+    <p class="msg" id="join-msg"></p>
+    <button class="ghost b-back">Voltar</button>
+  </section>
+
+  <section id="s-game" class="screen">
+    <div class="hud">
+      <div class="pl x" id="pl-X"><b>X</b><small id="n-X">Você</small><div class="score" id="sc-X">0</div></div>
+      <div class="pl o" id="pl-O"><b>O</b><small id="n-O">Amigo</small><div class="score" id="sc-O">0</div></div>
+    </div>
+    <div id="status"></div>
+    <div id="board"></div>
+    <button id="b-again" style="display:none">Jogar de novo</button>
+    <button class="ghost b-back">Sair da sala</button>
+  </section>
+
+</div>
+
+<script src="peerjs.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // Servidor de sinalização: por padrão o PeerJS Cloud (grátis). Dá pra trocar via ?peerHost=...&peerPort=...
+  var q = new URLSearchParams(location.search);
+  var PEER_OPTS = {
+    debug: 0,
+    config: { iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+    ] }
+  };
+  if (q.get("peerHost")) {
+    PEER_OPTS.host = q.get("peerHost");
+    PEER_OPTS.port = Number(q.get("peerPort") || 9000);
+    PEER_OPTS.path = q.get("peerPath") || "/";
+    PEER_OPTS.secure = q.get("peerSecure") === "1";
+  }
+
+  var PREFIX = "velha-online-";
+  var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem letras/números parecidos
+  var LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var peer = null, conn = null;
+  var role = null;            // "X" = host, "O" = convidado
+  var st = null;              // estado do jogo (autoritativo no host)
+  var roomCode = "";
+  var joinTimer = null;
+
+  // ---------- UI ----------
+  function show(name) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("on"); });
+    $("s-" + name).classList.add("on");
+  }
+  function setMsg(id, text, isErr) { var e = $(id); e.textContent = text; e.className = "msg" + (isErr ? " err" : ""); }
+
+  var boardEl = $("board");
+  for (var i = 0; i < 9; i++) {
+    (function (i) {
+      var b = document.createElement("button");
+      b.className = "cell";
+      b.onclick = function () { onCell(i); };
+      boardEl.appendChild(b);
+    })(i);
+  }
+
+  function render() {
+    var cells = boardEl.children;
+    for (var i = 0; i < 9; i++) {
+      var c = cells[i], v = st.board[i];
+      c.textContent = v || "";
+      c.className = "cell" + (v ? " " + v.toLowerCase() : "") + (st.line && st.line.indexOf(i) >= 0 ? " win" : "");
+      c.disabled = !!v || !!st.over || st.turn !== role || !conn;
+    }
+    $("sc-X").textContent = st.scores.X;
+    $("sc-O").textContent = st.scores.O;
+    $("n-X").textContent = role === "X" ? "Você" : "Amigo";
+    $("n-O").textContent = role === "O" ? "Você" : "Amigo";
+    $("pl-X").classList.toggle("turn", !st.over && st.turn === "X");
+    $("pl-O").classList.toggle("turn", !st.over && st.turn === "O");
+
+    var s = $("status");
+    if (st.over) {
+      if (st.winner) { s.textContent = st.winner === role ? "🎉 Você ganhou!" : "😅 Seu amigo ganhou"; }
+      else { s.textContent = "Deu velha! 🤝"; }
+    } else {
+      s.textContent = st.turn === role ? "Sua vez" : "Vez do seu amigo…";
+    }
+    $("b-again").style.display = st.over ? "block" : "none";
+    $("b-again").disabled = false;
+    $("b-again").textContent = "Jogar de novo";
+  }
+
+  // ---------- Lógica do jogo (roda no host) ----------
+  function freshState(scores, starter) {
+    return { board: Array(9).fill(null), turn: starter, starter: starter, over: false, winner: null, line: null,
+             scores: scores || { X: 0, O: 0 } };
+  }
+  function checkWin(b) {
+    for (var i = 0; i < LINES.length; i++) {
+      var l = LINES[i];
+      if (b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]) return { w: b[l[0]], line: l };
+    }
+    return null;
+  }
+  function applyMove(who, i) {
+    if (st.over || st.turn !== who || i < 0 || i > 8 || st.board[i]) return false;
+    st.board[i] = who;
+    var r = checkWin(st.board);
+    if (r) { st.over = true; st.winner = r.w; st.line = r.line; st.scores[r.w]++; }
+    else if (st.board.every(Boolean)) { st.over = true; }
+    else { st.turn = who === "X" ? "O" : "X"; }
+    return true;
+  }
+  function newRound() {
+    var next = st.starter === "X" ? "O" : "X";
+    st = freshState(st.scores, next);
+  }
+  function broadcast() {
+    render();
+    if (conn && conn.open) conn.send({ t: "state", st: st });
+  }
+
+  // ---------- Ações ----------
+  function onCell(i) {
+    if (!st || st.over || st.turn !== role) return;
+    if (role === "X") { if (applyMove("X", i)) broadcast(); }
+    else if (conn && conn.open) conn.send({ t: "move", i: i });
+  }
+  $("b-again").onclick = function () {
+    if (role === "X") { newRound(); broadcast(); }
+    else if (conn && conn.open) { conn.send({ t: "again" }); $("b-again").disabled = true; $("b-again").textContent = "Pedido enviado…"; }
+  };
+
+  // ---------- Rede ----------
+  function cleanup() {
+    clearTimeout(joinTimer);
+    try { if (conn) conn.close(); } catch (e) {}
+    try { if (peer) peer.destroy(); } catch (e) {}
+    conn = null; peer = null; st = null; role = null;
+  }
+  function toMenu() { cleanup(); show("menu"); }
+  document.querySelectorAll(".b-back").forEach(function (b) { b.onclick = toMenu; });
+  window.onAndroidBack = function () {
+    if ($("s-menu").classList.contains("on")) return false;
+    toMenu(); return true;
+  };
+
+  function randomCode() {
+    var s = "";
+    for (var i = 0; i < 5; i++) s += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+    return s;
+  }
+
+  // Host
+  $("b-create").onclick = function () { createRoom(0); };
+  function createRoom(attempt) {
+    cleanup();
+    roomCode = randomCode();
+    $("host-code").textContent = roomCode;
+    setMsg("host-msg", "Criando sala…");
+    show("host");
+    peer = new Peer(PREFIX + roomCode, PEER_OPTS);
+    peer.on("open", function () { setMsg("host-msg", "Aguardando seu amigo entrar…"); });
+    peer.on("error", function (e) {
+      if (e.type === "unavailable-id" && attempt < 5) return createRoom(attempt + 1);
+      setMsg("host-msg", "Erro de conexão (" + e.type + "). Verifique a internet e tente de novo.", true);
+    });
+    peer.on("connection", function (c) {
+      if (conn && conn.open) { c.on("open", function () { c.send({ t: "full" }); setTimeout(function () { c.close(); }, 300); }); return; }
+      conn = c;
+      c.on("open", function () {
+        role = "X";
+        st = freshState({ X: 0, O: 0 }, "X");
+        c.send({ t: "hello" });
+        show("game");
+        broadcast();
+      });
+      c.on("data", function (d) {
+        if (!d || !st) return;
+        if (d.t === "move") { if (applyMove("O", d.i)) broadcast(); }
+        else if (d.t === "again" && st.over) { newRound(); broadcast(); }
+      });
+      c.on("close", onPeerLeft);
+      c.on("error", onPeerLeft);
+    });
+  }
+  $("b-share").onclick = function () {
+    var text = "Bora jogar Jogo da Velha online! Abra o app, toque em \"Entrar numa sala\" e digite o código: " + roomCode;
+    if (navigator.share) navigator.share({ text: text }).catch(function () {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(text);
+  };
+
+  // Convidado
+  $("b-join-go").onclick = function () { cleanup(); $("join-code").value = ""; setMsg("join-msg", ""); show("join"); };
+  $("join-code").oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); };
+  $("b-join").onclick = function () {
+    var code = $("join-code").value.trim().toUpperCase();
+    if (code.length !== 5) return setMsg("join-msg", "O código tem 5 letras/números.", true);
+    cleanup();
+    setMsg("join-msg", "Conectando…");
+    $("b-join").disabled = true;
+    function fail(text) { clearTimeout(joinTimer); setMsg("join-msg", text, true); $("b-join").disabled = false; try { if (peer) peer.destroy(); } catch (e) {} peer = null; conn = null; }
+
+    peer = new Peer(PEER_OPTS);
+    peer.on("error", function (e) {
+      fail(e.type === "peer-unavailable" ? "Sala não encontrada. Confira o código." : "Erro de conexão (" + e.type + "). Tente de novo.");
+    });
+    peer.on("open", function () {
+      var c = peer.connect(PREFIX + code, { reliable: true });
+      joinTimer = setTimeout(function () { fail("Não consegui conectar. Tente de novo."); }, 20000);
+      c.on("open", function () { clearTimeout(joinTimer); conn = c; role = "O"; $("b-join").disabled = false; });
+      c.on("data", function (d) {
+        if (!d) return;
+        if (d.t === "full") { fail("Essa sala já está cheia."); return; }
+        if (d.t === "state") { st = d.st; show("game"); render(); }
+      });
+      c.on("close", onPeerLeft);
+      c.on("error", onPeerLeft);
+    });
+  };
+
+  function onPeerLeft() {
+    if (!st) return;
+    conn = null;
+    st.over = true;
+    render();
+    $("status").textContent = "Seu amigo saiu da sala 😕";
+    $("b-again").style.display = "none";
+  }
+})();
+</script>
+</body>
+</html>

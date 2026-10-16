@@ -1,0 +1,28 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.velha.online'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.velha.online'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            // Assinado com a chave de debug para o APK poder ser instalado direto.
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
